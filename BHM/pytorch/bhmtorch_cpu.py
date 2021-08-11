@@ -21,6 +21,8 @@ device = pt.device("cpu")
 #TODO: efficient querying
 #TODO: batch training
 #TODO: re-using parameters for moving vehicles
+
+
 class BHM2D_PYTORCH():
     def __init__(self, gamma=0.05, grid=None, cell_resolution=(5, 5), cell_max_min=None, X=None, nIter=0, mu_sig=None):
         """
@@ -43,10 +45,10 @@ class BHM2D_PYTORCH():
             self.mu = pt.tensor(mu_sig[:,0], dtype=pt.float32)
             self.sig = pt.tensor(mu_sig[:,1], dtype=pt.float32)
 
-    def updateGrid(grid):
+    def updateGrid(self, grid):
         self.grid = grid
 
-    def updateMuSig(mu_sig):
+    def updateMuSig(self, mu_sig):
         self.mu = pt.tensor(mu_sig[:,0], dtype=pt.float32)
         self.sig = pt.tensor(mu_sig[:,1], dtype=pt.float32)
 
@@ -126,11 +128,10 @@ class BHM2D_PYTORCH():
 
         return self.mu, self.sig
 
-
     def predict(self, Xq):
         """
-        :param Xq: raw inquery points
-        :return: mean occupancy (Lapalce approximation)
+        :param Xq: raw in query points
+        :return: mean occupancy (Laplace approximation)
         """
         Xq = self.__sparse_features(Xq)
 
@@ -177,10 +178,10 @@ class BHM3D_PYTORCH():
         self.nIter = nIter
         print(' Number of hinge points={}'.format(self.grid.shape[0]))
 
-    def updateGrid(grid):
+    def updateGrid(self, grid):
         self.grid = grid
 
-    def updateMuSig(mu_sig):
+    def updateMuSig(self, mu_sig):
         self.mu = pt.tensor(mu_sig[:,0], dtype=pt.float32)
         self.sig = pt.tensor(mu_sig[:,1], dtype=pt.float32)
 

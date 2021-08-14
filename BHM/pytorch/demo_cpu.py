@@ -57,7 +57,7 @@ def load_parameters(case):
 dtype = pt.float32
 device = pt.device("cpu")
 # dataset =  'kitti1'
-dataset =  'intel'
+dataset = 'intel'
 #device = pt.device("cuda:0") # Uncomment this to run on GPU
 
 # Read the file
@@ -101,16 +101,6 @@ for ith_scan in range(0, max_t, skip):
         X, y = X_new[info_val_indx, :], y_new[info_val_indx]
         print('  {:.2f}% points were used.'.format(X.shape[0]/X_new.shape[0]*100))
 
-    # X, y = X_new, y_new
-    # # bhm_mdl = sbhm.SBHM(gamma=gamma, grid=None, cell_resolution=cell_resolution, cell_max_min=cell_max_min, X=X, calc_loss=False)
-    # bhm_mdl = BHM2D_PYTORCH(
-    #     gamma=gamma,
-    #     grid=None,
-    #     cell_resolution=cell_resolution,
-    #     cell_max_min=cell_max_min,
-    #     X=X,
-    #     nIter=1,
-    # )
 
     # Fit the model
     t1 = time.time()
@@ -123,7 +113,14 @@ for ith_scan in range(0, max_t, skip):
                          np.arange(cell_max_min[2], cell_max_min[3] - 1, q_resolution))
     grid = np.hstack((xx.ravel()[:, np.newaxis], yy.ravel()[:, np.newaxis]))
     Xq = pt.tensor(grid, dtype=pt.float32)
+    # Predict
+    t3 = time.time()
     yq = bhm_mdl.predict(Xq)
+    t4 = time.time()
+
+    print('Fit time: {}'.format(t2 - t1))
+    print('Pred time: {}'.format(t4 - t3))
+    print('iter time: {}\n'.format(t4 - t1))
 
     Xq = Xq.cpu().numpy()
     yq = yq.cpu().numpy()
@@ -148,14 +145,6 @@ for ith_scan in range(0, max_t, skip):
     # pl.savefig('Output/step' + str(ith_scan) + '.png', bbox_inches='tight')
     pl.savefig(os.path.abspath('../../Outputs/intel_{:03d}.png'.format(ith_scan)), bbox_inches='tight')
 
-    # # Plot frame i
-    # pl.scatter(Xq[:, 0], Xq[:, 1], c=yq, cmap='jet', s=5, vmin=0, vmax=1, edgecolors='')
-    # pl.colorbar()
-    # pl.xlim([-80,80]); pl.ylim([-80,80])
-    # pl.title('{}_frame{}'.format(dataset, ith_scan))
-    # pl.savefig(os.path.abspath('../../Outputs/intel_{}.png'.format(ith_scan)))
-    # # pl.show()
-    # pl.close('all')
 
 # # Partition the environment into to 4 areas
 # # TODO: We can parallelize this

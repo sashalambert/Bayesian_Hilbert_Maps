@@ -1,4 +1,6 @@
 *.png
+*.tar
+*.tgz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -112,7 +112,7 @@ class BHM2D_PYTORCH():
         mu = sig*(mu0/sig0 + pt.mm(X.t(), y - 0.5).squeeze())
         return mu, sig
 
-    def save(self, save_path=None, dataset_name=None):
+    def save(self, save_path=None, filename='bhm.pt'):
         save_path.mkdir(parents=False, exist_ok=True)
         params = {
             'gamma': self.gamma,
@@ -122,7 +122,7 @@ class BHM2D_PYTORCH():
             'epsilon': self.epsilon,
             'nIter': self.nIter,
         }
-        pt.save(params, save_path / 'bhm_{}.pt'.format(dataset_name))
+        pt.save(params, save_path / filename)
 
     def load(self, file_path=None):
         params_dict = pt.load(file_path)
@@ -132,7 +132,6 @@ class BHM2D_PYTORCH():
         self.sig = params_dict['sig']
         self.epsilon = params_dict['epsilon']
         self.nIter = params_dict['nIter']
-
 
     def fit(self, X, y):
         """

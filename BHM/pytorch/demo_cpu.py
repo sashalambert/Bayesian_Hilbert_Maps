@@ -62,6 +62,8 @@ device = pt.device("cpu")
 # dataset =  'kitti1'
 dataset = 'intel'
 save_path = base_path / 'Outputs' / 'saved_models'
+save_iter = 10
+plot_iter = 10
 #device = pt.device("cuda:0") # Uncomment this to run on GPU
 
 # Read the file
@@ -111,50 +113,50 @@ for ith_scan in range(0, max_t, skip):
     bhm_mdl.fit(X, y)
     t2 = time.time()
 
-    # query the model
-    q_resolution = 0.25
-    xx, yy= np.meshgrid(np.arange(cell_max_min[0], cell_max_min[1] - 1, q_resolution),
-                         np.arange(cell_max_min[2], cell_max_min[3] - 1, q_resolution))
-    grid = np.hstack((xx.ravel()[:, np.newaxis], yy.ravel()[:, np.newaxis]))
-    Xq = pt.tensor(grid, dtype=pt.float32)
-    # Predict
-    t3 = time.time()
-    yq = bhm_mdl.predict(Xq)
-    t4 = time.time()
+    if ith_scan % plot_iter == 0:
+        # query the model
+        q_resolution = 0.25
+        xx, yy= np.meshgrid(np.arange(cell_max_min[0], cell_max_min[1] - 1, q_resolution),
+                             np.arange(cell_max_min[2], cell_max_min[3] - 1, q_resolution))
+        grid = np.hstack((xx.ravel()[:, np.newaxis], yy.ravel()[:, np.newaxis]))
+        Xq = pt.tensor(grid, dtype=pt.float32)
+        # Predict
+        t3 = time.time()
+        yq = bhm_mdl.predict(Xq)
+        t4 = time.time()
 
-    print('Fit time: {}'.format(t2 - t1))
-    print('Pred time: {}'.format(t4 - t3))
-    print('iter time: {}\n'.format(t4 - t1))
+        print('Fit time: {}'.format(t2 - t1))
+        print('Pred time: {}'.format(t4 - t3))
+        print('iter time: {}\n'.format(t4 - t1))
 
-    Xq = Xq.cpu().numpy()
-    yq = yq.cpu().numpy()
+        Xq = Xq.cpu().numpy()
+        yq = yq.cpu().numpy()
 
-    print('PLotting...')
-    pl.figure(figsize=(13,5))
-    pl.subplot(121)
-    ones_ = np.where(y==1)
-    # pl.scatter(X[ones_, 0], X[ones_, 1], c='r', cmap='jet', s=5, edgecolors='')
-    pl.scatter(X[ones_, 0], X[ones_, 1], c='r', cmap='jet', s=5)
-    pl.title('Laser hit points at t={}'.format(ith_scan))
-    pl.xlim([cell_max_min[0], cell_max_min[1]]); pl.ylim([cell_max_min[2], cell_max_min[3]])
-    pl.subplot(122)
-    pl.title('SBHM at t={}'.format(ith_scan))
-    # pl.scatter(Xq[:, 0], Xq[:, 1], c=yq, cmap='jet', s=10, marker='8',edgecolors='')
-    pl.scatter(Xq[:, 0], Xq[:, 1], c=yq, cmap='jet', s=10, marker='8',)
-    # pl.scatter(Xq[:, 0], Xq[:, 1], cmap='jet', marker='8',edgecolors='')
-    # pl.scatter(Xq[:, 0], Xq[:, 1])
-    #pl.imshow(Y_query.reshape(xx.shape))
-    pl.colorbar()
-    pl.xlim([cell_max_min[0], cell_max_min[1]]); pl.ylim([cell_max_min[2], cell_max_min[3]])
-    # pl.savefig('Output/step' + str(ith_scan) + '.png', bbox_inches='tight')
-    pl.savefig(os.path.abspath('../../Outputs/intel_{:03d}.png'.format(ith_scan)), bbox_inches='tight')
+        print('PLotting...')
+        pl.figure(figsize=(13,5))
+        pl.subplot(121)
+        ones_ = np.where(y==1)
+        # pl.scatter(X[ones_, 0], X[ones_, 1], c='r', cmap='jet', s=5, edgecolors='')
+        pl.scatter(X[ones_, 0], X[ones_, 1], c='r', cmap='jet', s=5)
+        pl.title('Laser hit points at t={}'.format(ith_scan))
+        pl.xlim([cell_max_min[0], cell_max_min[1]]); pl.ylim([cell_max_min[2], cell_max_min[3]])
+        pl.subplot(122)
+        pl.title('SBHM at t={}'.format(ith_scan))
+        # pl.scatter(Xq[:, 0], Xq[:, 1], c=yq, cmap='jet', s=10, marker='8',edgecolors='')
+        pl.scatter(Xq[:, 0], Xq[:, 1], c=yq, cmap='jet', s=10, marker='8',)
+        # pl.scatter(Xq[:, 0], Xq[:, 1], cmap='jet', marker='8',edgecolors='')
+        # pl.scatter(Xq[:, 0], Xq[:, 1])
+        #pl.imshow(Y_query.reshape(xx.shape))
+        pl.colorbar()
+        pl.xlim([cell_max_min[0], cell_max_min[1]]); pl.ylim([cell_max_min[2], cell_max_min[3]])
+        # pl.savefig('Output/step' + str(ith_scan) + '.png', bbox_inches='tight')
+        pl.savefig(os.path.abspath('../../Outputs/intel_{:03d}.png'.format(ith_scan)), bbox_inches='tight')
 
-    if save_path is not None:
+    if save_path is not None and \
+       ith_scan % save_iter == 0:
         print('Saving map...')
-        bhm_mdl.save(save_path, dataset)
-
-    #FIXME: remove after debugging
-    bhm_mdl.load(save_path / 'bhm_intel.pt')
+        filename = 'bhm_{}_res{}_iter{:03d}.pt'.format(dataset, q_resolution, ith_scan)
+        bhm_mdl.save(save_path, filename)
 
 # # Partition the environment into to 4 areas
 # # TODO: We can parallelize this

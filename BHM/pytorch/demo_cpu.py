@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import torch as pt
 import matplotlib.pyplot as pl
+from pathlib import Path
 from bhmtorch_cpu import BHM2D_PYTORCH
 
 def getPartitions(cell_max_min, nPartx1, nPartx2):
@@ -53,11 +54,14 @@ def load_parameters(case):
 
     return parameters[case]
 
+base_path =  Path(__file__).resolve().parents[2]
+
 # Settings
 dtype = pt.float32
 device = pt.device("cpu")
 # dataset =  'kitti1'
 dataset = 'intel'
+save_path = base_path / 'Outputs' / 'saved_models'
 #device = pt.device("cuda:0") # Uncomment this to run on GPU
 
 # Read the file
@@ -145,6 +149,12 @@ for ith_scan in range(0, max_t, skip):
     # pl.savefig('Output/step' + str(ith_scan) + '.png', bbox_inches='tight')
     pl.savefig(os.path.abspath('../../Outputs/intel_{:03d}.png'.format(ith_scan)), bbox_inches='tight')
 
+    if save_path is not None:
+        print('Saving map...')
+        bhm_mdl.save(save_path, dataset)
+
+    #FIXME: remove after debugging
+    bhm_mdl.load(save_path / 'bhm_intel.pt')
 
 # # Partition the environment into to 4 areas
 # # TODO: We can parallelize this

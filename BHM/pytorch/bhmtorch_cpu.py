@@ -6,6 +6,7 @@ import torch as pt
 import numpy as np
 from sklearn.metrics.pairwise import rbf_kernel
 import matplotlib.pyplot as pl
+from pathlib import Path
 from mpl_toolkits.mplot3d import Axes3D
 import time
 import sys
@@ -24,7 +25,16 @@ device = pt.device("cpu")
 
 
 class BHM2D_PYTORCH():
-    def __init__(self, gamma=0.05, grid=None, cell_resolution=(5, 5), cell_max_min=None, X=None, nIter=0, mu_sig=None):
+    def __init__(
+            self,
+            gamma=0.05,
+            grid=None,
+            cell_resolution=(5, 5),
+            cell_max_min=None,
+            X=None,
+            nIter=0,
+            mu_sig=None,
+    ):
         """
         :param gamma: RBF bandwidth
         :param grid: if there are prespecified locations to hinge the RBF
@@ -102,6 +112,28 @@ class BHM2D_PYTORCH():
         mu = sig*(mu0/sig0 + pt.mm(X.t(), y - 0.5).squeeze())
         return mu, sig
 
+    def save(self, save_path=None, dataset_name=None):
+        save_path.mkdir(parents=False, exist_ok=True)
+        params = {
+            'gamma': self.gamma,
+            'grid': self.grid,
+            'mu': self.mu,
+            'sig': self.sig,
+            'epsilon': self.epsilon,
+            'nIter': self.nIter,
+        }
+        pt.save(params, save_path / 'bhm_{}.pt'.format(dataset_name))
+
+    def load(self, file_path=None):
+        params_dict = pt.load(file_path)
+        self.gamma = params_dict['gamma']
+        self.grid = params_dict['grid']
+        self.mu = params_dict['mu']
+        self.sig = params_dict['sig']
+        self.epsilon = params_dict['epsilon']
+        self.nIter = params_dict['nIter']
+
+
     def fit(self, X, y):
         """
         :param X: raw data
@@ -127,6 +159,19 @@ class BHM2D_PYTORCH():
         # print(self.mu)
 
         return self.mu, self.sig
+
+    def log_prob(self, Xq):
+        """
+        :param Xq: raw in query points
+        """
+        prob_Xq = self.predict(Xq)
+        return pt.log(prob_Xq)
+
+    def grad_log_p(self, Xq):
+        """
+        :param Xq: raw in query points
+        """
+        raise NotImplementedError
 
     def predict(self, Xq):
         """

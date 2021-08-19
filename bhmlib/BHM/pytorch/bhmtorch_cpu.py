@@ -34,6 +34,9 @@ class BHM2D_PYTORCH():
             X=None,
             nIter=0,
             mu_sig=None,
+            mu=None,
+            sig=None,
+            epsilon=None,
     ):
         """
         :param gamma: RBF bandwidth
@@ -54,6 +57,11 @@ class BHM2D_PYTORCH():
         if mu_sig is not None:
             self.mu = pt.tensor(mu_sig[:,0], dtype=pt.float32)
             self.sig = pt.tensor(mu_sig[:,1], dtype=pt.float32)
+        else:
+            if mu is not None:
+                self.mu = mu
+            if sig is not None:
+                self.sig = sig
 
     def updateGrid(self, grid):
         self.grid = grid
@@ -119,7 +127,6 @@ class BHM2D_PYTORCH():
             'grid': self.grid,
             'mu': self.mu,
             'sig': self.sig,
-            'epsilon': self.epsilon,
             'nIter': self.nIter,
         }
         pt.save(params, save_path / filename)
@@ -130,7 +137,6 @@ class BHM2D_PYTORCH():
         self.grid = params_dict['grid']
         self.mu = params_dict['mu']
         self.sig = params_dict['sig']
-        self.epsilon = params_dict['epsilon']
         self.nIter = params_dict['nIter']
 
     def fit(self, X, y):

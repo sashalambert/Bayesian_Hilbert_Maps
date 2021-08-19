@@ -107,7 +107,6 @@ for ith_scan in range(0, max_t, skip):
         X, y = X_new[info_val_indx, :], y_new[info_val_indx]
         print('  {:.2f}% points were used.'.format(X.shape[0]/X_new.shape[0]*100))
 
-
     # Fit the model
     t1 = time.time()
     bhm_mdl.fit(X, y)

@@ -93,6 +93,7 @@ for ith_scan in range(0, max_t, skip):
         # bhm_mdl = sbhm.SBHM(gamma=gamma, grid=None, cell_resolution=cell_resolution, cell_max_min=cell_max_min, X=X, calc_loss=False)
         bhm_mdl = BHM2D_PYTORCH(
         	gamma=gamma,
+        	torch_kernel_func=True,
         	grid=None,
         	cell_resolution=cell_resolution,
         	cell_max_min=cell_max_min,

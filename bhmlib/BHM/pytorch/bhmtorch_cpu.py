@@ -11,12 +11,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import time
 import sys
 import pandas as pd
+from kernels import RBF
 
 dtype = pt.float32
 device = pt.device("cpu")
 #device = pt.device("cuda:0") # Uncomment this to run on GPU
 
-#TODO: merege 2D and 3D classes into a single class
+#TODO: merge 2D and 3D classes into a single class
 #TODO: get rid of all numpy operations and test on a GPU
 #TODO: parallelizing the segmentations
 #TODO: efficient querying
@@ -37,6 +38,7 @@ class BHM2D_PYTORCH():
             mu=None,
             sig=None,
             epsilon=None,
+            torch_kernel_func=False,
     ):
         """
         :param gamma: RBF bandwidth
@@ -62,7 +64,9 @@ class BHM2D_PYTORCH():
                 self.mu = mu
             if sig is not None:
                 self.sig = sig
-
+        self.torch_kernel_func = torch_kernel_func
+        if torch_kernel_func:
+            self.rbf_torch = RBF()
     def updateGrid(self, grid):
         self.grid = grid
 
@@ -100,10 +104,14 @@ class BHM2D_PYTORCH():
         :param X: inputs of size (N,2)
         :return: hinged features with intercept of size (N, # of features + 1)
         """
-        rbf_features = rbf_kernel(X, self.grid, gamma=self.gamma)
-        # COMMENTED OUT BIAS TERM
-        # rbf_features = np.hstack((np.ones(X.shape[0])[:, np.newaxis], rbf_features))
-        return pt.tensor(rbf_features, dtype=pt.float32)
+        if self.torch_kernel_func:
+            rbf_features, _, _ = self.rbf_torch.eval(X, self.grid, gamma=self.gamma)
+            return rbf_features.float()
+        else:
+            rbf_features = rbf_kernel(X, self.grid, gamma=self.gamma)
+            # COMMENTED OUT BIAS TERM
+            # rbf_features = np.hstack((np.ones(X.shape[0])[:, np.newaxis], rbf_features))
+            return pt.tensor(rbf_features, dtype=pt.float32)
 
     def __calc_posterior(self, X, y, epsilon, mu0, sig0):
         """
@@ -176,7 +184,27 @@ class BHM2D_PYTORCH():
         """
         :param Xq: raw in query points
         """
-        raise NotImplementedError
+        assert self.torch_kernel_func
+        # Use torch kernels with analytic gradients
+        K, dK_dXq, _ = self.rbf_torch.eval(Xq, self.grid, gamma=self.gamma)
+
+        # From predict function
+        mu_a = K.mm(self.mu.reshape(-1, 1)).squeeze()
+        sig2_inv_a = pt.sum((K ** 2) * self.sig, dim=1)
+        k = 1.0 / pt.sqrt(1 + np.pi * sig2_inv_a / 8)
+        log_p = pt.log(pt.sigmoid(k*mu_a))
+
+        # Autodiff second term.
+        dlog_p_dK = pt.autograd.grad(  # batch x rbf_features
+            log_p.sum(),
+            K,
+            create_graph=True,
+        )[0]
+
+        # Chain rule gradients
+        dlog_p_dXq = dlog_p_dK @ dK_dXq
+
+        return dlog_p_dXq
 
     def predict(self, Xq):
         """

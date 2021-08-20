@@ -57,8 +57,10 @@ def load_parameters(case):
 base_path =  Path(__file__).resolve().parents[2]
 
 # Settings
-dtype = pt.float32
+# dtype = pt.float32
 device = pt.device("cpu")
+# pt.set_default_tensor_type(pt.FloatTensor)
+pt.set_default_tensor_type(pt.DoubleTensor)
 # dataset =  'kitti1'
 dataset = 'intel'
 save_path = base_path / 'Outputs' / 'saved_models'
@@ -72,7 +74,7 @@ fn_train, cell_resolution, cell_max_min, skip, thresh, gamma = load_parameters(d
 #read data
 g = pd.read_csv(fn_train, delimiter=',').values
 print('shapes:', g.shape)
-g = pt.tensor(g, dtype=pt.float32)
+g = pt.tensor(g)
 X_train = g[:, 0:3]
 Y_train = g[:, 3].reshape(-1, 1)
 
@@ -108,6 +110,9 @@ for ith_scan in range(0, max_t, skip):
         X, y = X_new[info_val_indx, :], y_new[info_val_indx]
         print('  {:.2f}% points were used.'.format(X.shape[0]/X_new.shape[0]*100))
 
+        ## Debug
+        grad_log_p = bhm_mdl.grad_log_p_vacancy(X_new)
+
     # Fit the model
     t1 = time.time()
     bhm_mdl.fit(X, y)
@@ -119,7 +124,7 @@ for ith_scan in range(0, max_t, skip):
         xx, yy= np.meshgrid(np.arange(cell_max_min[0], cell_max_min[1] - 1, q_resolution),
                              np.arange(cell_max_min[2], cell_max_min[3] - 1, q_resolution))
         grid = np.hstack((xx.ravel()[:, np.newaxis], yy.ravel()[:, np.newaxis]))
-        Xq = pt.tensor(grid, dtype=pt.float32)
+        Xq = pt.tensor(grid)
         # Predict
         t3 = time.time()
         yq = bhm_mdl.predict(Xq)

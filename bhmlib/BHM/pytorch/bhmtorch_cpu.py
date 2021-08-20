@@ -202,8 +202,8 @@ class BHM2D_PYTORCH():
         dlog_p_dK = pt.autograd.grad(  # batch x rbf_features
             log_p.sum(),
             K,
-            create_graph=True,
         )[0]
+
         # Chain rule gradients
         dlog_p_dXq = dlog_p_dK.unsqueeze(1) @ dK_dXq
 

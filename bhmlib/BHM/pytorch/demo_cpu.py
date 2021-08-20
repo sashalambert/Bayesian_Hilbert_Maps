@@ -63,13 +63,19 @@ device = pt.device("cpu")
 pt.set_default_tensor_type(pt.DoubleTensor)
 # dataset =  'kitti1'
 dataset = 'intel'
-save_path = base_path / 'Outputs' / 'saved_models'
+# save_path = base_path / 'Outputs' / 'saved_models'
+save_path = None
 save_iter = 10
 plot_iter = 10
 #device = pt.device("cuda:0") # Uncomment this to run on GPU
 
 # Read the file
-fn_train, cell_resolution, cell_max_min, skip, thresh, gamma = load_parameters(dataset)
+(fn_train,
+ cell_resolution,
+ cell_max_min,
+ skip,
+ thresh,
+ gamma,) = load_parameters(dataset)
 
 #read data
 g = pd.read_csv(fn_train, delimiter=',').values
@@ -92,7 +98,6 @@ for ith_scan in range(0, max_t, skip):
     if ith_scan == 0:
         # get all data for the first scan and initialize the model
         X, y = X_new, y_new
-        # bhm_mdl = sbhm.SBHM(gamma=gamma, grid=None, cell_resolution=cell_resolution, cell_max_min=cell_max_min, X=X, calc_loss=False)
         bhm_mdl = BHM2D_PYTORCH(
         	gamma=gamma,
         	torch_kernel_func=True,
@@ -109,9 +114,6 @@ for ith_scan in range(0, max_t, skip):
         info_val_indx = info_val_indx.flatten()
         X, y = X_new[info_val_indx, :], y_new[info_val_indx]
         print('  {:.2f}% points were used.'.format(X.shape[0]/X_new.shape[0]*100))
-
-        ## Debug
-        grad_log_p = bhm_mdl.grad_log_p_vacancy(X_new)
 
     # Fit the model
     t1 = time.time()

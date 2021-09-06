@@ -120,9 +120,9 @@ for ith_scan in range(0, max_t, skip):
     bhm_mdl.fit(X, y)
     t2 = time.time()
 
+    q_resolution = 0.25
     if ith_scan % plot_iter == 0:
         # query the model
-        q_resolution = 0.25
         xx, yy= np.meshgrid(np.arange(cell_max_min[0], cell_max_min[1] - 1, q_resolution),
                              np.arange(cell_max_min[2], cell_max_min[3] - 1, q_resolution))
         grid = np.hstack((xx.ravel()[:, np.newaxis], yy.ravel()[:, np.newaxis]))
